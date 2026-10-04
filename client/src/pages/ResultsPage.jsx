@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import AgentPipeline from '../components/AgentPipeline.jsx'
 
 function parseEvents(buffer) {
@@ -23,6 +23,7 @@ function parseEvents(buffer) {
 
 export default function ResultsPage() {
   const { state } = useLocation()
+  const navigate = useNavigate()
   const topic = state?.topic || ''
   const [events, setEvents] = useState([])
   const [result, setResult] = useState(null)
@@ -97,6 +98,13 @@ export default function ResultsPage() {
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
       <div className="mx-auto max-w-6xl space-y-8">
         <header>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="mb-6 text-sm text-slate-400 transition hover:text-cyan-400"
+          >
+            ← Back to home
+          </button>
           <p className="text-sm font-semibold uppercase tracking-widest text-cyan-400">
             RealNews analysis
           </p>

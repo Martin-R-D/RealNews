@@ -1,11 +1,12 @@
 require('dotenv').config()
 
 const Groq = require('groq-sdk')
+const { parseJson } = require('./parseJson')
 
 async function orchestrate(topic) {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.1-8b-instant',
+    model: 'openai/gpt-oss-20b',
     messages: [
       {
         role: 'user',
@@ -23,7 +24,7 @@ async function orchestrate(topic) {
     throw new Error('Groq returned an empty response')
   }
 
-  const queries = JSON.parse(content)
+  const queries = parseJson(content)
   if (
     !Array.isArray(queries) ||
     queries.length !== 3 ||

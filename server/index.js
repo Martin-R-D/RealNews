@@ -48,10 +48,18 @@ app.post('/analyze', async (req, res) => {
     send({ agent: 'orchestrator', status: 'done' })
 
     const query = queries.join(' OR ')
+    const fetchRSSQueries = (source, url) =>
+      Promise.all(queries.map((item) => fetchRSS(source, url, item))).then(
+        (groups) =>
+          [...new Map(groups.flat().map((article) => [article.url, article])).values()].slice(
+            0,
+            3,
+          ),
+      )
     const fetchers = [
-      ['BBC', () => fetchRSS('BBC', RSS_SOURCES.BBC, query)],
-      ['Al Jazeera', () => fetchRSS('Al Jazeera', RSS_SOURCES['Al Jazeera'], query)],
-      ['Fox News', () => fetchRSS('Fox News', RSS_SOURCES['Fox News'], query)],
+      ['BBC', () => fetchRSSQueries('BBC', RSS_SOURCES.BBC)],
+      ['Al Jazeera', () => fetchRSSQueries('Al Jazeera', RSS_SOURCES['Al Jazeera'])],
+      ['Fox News', () => fetchRSSQueries('Fox News', RSS_SOURCES['Fox News'])],
       ['The Guardian', () => fetchGuardian(query)],
       ['New York Times', () => fetchNYT(query)],
     ]
