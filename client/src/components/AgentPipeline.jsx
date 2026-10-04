@@ -23,7 +23,9 @@ function Agent({ name, state, message }) {
 }
 
 function getState(events, name) {
-  const event = [...events].reverse().find((item) => item.agent === name)
+  const event = [...events]
+    .reverse()
+    .find((item) => item.agent?.toLowerCase() === name.toLowerCase())
   return event
     ? { status: event.status, message: event.message }
     : { status: 'waiting' }
