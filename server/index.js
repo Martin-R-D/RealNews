@@ -7,6 +7,7 @@ const { judge } = require('./agents/judge')
 const { orchestrate } = require('./agents/orchestrator')
 const { fetchGuardian } = require('./fetchers/guardianFetcher')
 const { fetchNYT } = require('./fetchers/nytFetcher')
+const { fetchTopStories } = require('./fetchers/nytTopStories')
 const { fetchRSS, RSS_SOURCES } = require('./fetchers/rssFetcher')
 
 const app = express()
@@ -17,6 +18,14 @@ app.use(express.json())
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' })
+})
+
+app.get('/top-stories', async (req, res) => {
+  try {
+    res.json(await fetchTopStories(req.query.section || 'home'))
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
 })
 
 app.post('/analyze', async (req, res) => {
@@ -50,9 +59,14 @@ app.post('/analyze', async (req, res) => {
 
     const results = await Promise.all(
       fetchers.map(async ([source, fetcher]) => {
-        const articles = await fetcher()
-        send({ agent: source, status: 'done', articlesFound: articles.length })
-        return articles
+        try {
+          const articles = await fetcher()
+          send({ agent: source, status: 'done', articlesFound: articles.length })
+          return articles
+        } catch (error) {
+          send({ agent: source, status: 'error', message: error.message })
+          return []
+        }
       }),
     )
     const articles = results.flat()

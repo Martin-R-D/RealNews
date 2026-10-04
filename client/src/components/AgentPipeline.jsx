@@ -1,4 +1,10 @@
-const sources = ['BBC', 'Al Jazeera', 'Fox News', 'Guardian', 'NYT']
+const sources = [
+  ['BBC', 'BBC'],
+  ['Al Jazeera', 'Al Jazeera'],
+  ['Fox News', 'Fox News'],
+  ['Guardian', 'The Guardian'],
+  ['NYT', 'New York Times'],
+]
 
 function Agent({ name, state, message }) {
   const styles = {
@@ -38,8 +44,8 @@ export default function AgentPipeline({ events = [] }) {
     <div className="flex w-full flex-col gap-3">
       <AgentState events={events} name={pipeline[0]} />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-        {sources.map((source) => (
-          <AgentState key={source} events={events} name={source} />
+        {sources.map(([label, name]) => (
+          <AgentState key={name} events={events} label={label} name={name} />
         ))}
       </div>
       <AgentState events={events} name={pipeline[1]} />
@@ -48,7 +54,7 @@ export default function AgentPipeline({ events = [] }) {
   )
 }
 
-function AgentState({ events, name }) {
+function AgentState({ events, name, label = name }) {
   const state = getState(events, name)
-  return <Agent name={name} state={state.status} message={state.message} />
+  return <Agent name={label} state={state.status} message={state.message} />
 }

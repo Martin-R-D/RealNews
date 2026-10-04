@@ -57,6 +57,9 @@ export default function ResultsPage() {
             if (event.type === 'result') {
               setResult(event.data)
               setLoading(false)
+            } else if (event.error) {
+              setError(event.error)
+              setLoading(false)
             } else {
               setEvents((current) => [...current, event])
             }

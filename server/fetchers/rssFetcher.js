@@ -10,10 +10,11 @@ const RSS_SOURCES = {
 
 async function fetchRSS(source, url, query) {
   const feed = await parser.parseURL(url)
-  const keywords = String(query || '')
+  const queries = String(query || '')
     .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean)
+    .split(/\s+or\s+/i)
+    .map((item) => item.split(/\s+/).filter(Boolean))
+    .filter((keywords) => keywords.length)
 
   return feed.items
     .filter((item) => {
@@ -21,7 +22,9 @@ async function fetchRSS(source, url, query) {
         item.content || item.contentSnippet || item.description || ''
       }`.toLowerCase()
 
-      return keywords.every((keyword) => searchableText.includes(keyword))
+      return queries.some((keywords) =>
+        keywords.every((keyword) => searchableText.includes(keyword)),
+      )
     })
     .slice(0, 3)
     .map((item) => ({

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const topics = [
@@ -12,7 +12,21 @@ const topics = [
 
 export default function HomePage() {
   const [topic, setTopic] = useState('')
+  const [stories, setStories] = useState([])
+  const [storiesLoading, setStoriesLoading] = useState(true)
+  const [storiesError, setStoriesError] = useState('')
   const navigate = useNavigate()
+
+  useEffect(() => {
+    fetch('/top-stories')
+      .then((response) => {
+        if (!response.ok) throw new Error('Unable to load top stories')
+        return response.json()
+      })
+      .then(setStories)
+      .catch((error) => setStoriesError(error.message))
+      .finally(() => setStoriesLoading(false))
+  }, [])
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -69,6 +83,38 @@ export default function HomePage() {
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl pb-16 pt-24">
+        <h2 className="text-2xl font-semibold">What the world is talking about</h2>
+        {storiesLoading && (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {topics.slice(0, 6).map((topic) => (
+              <div key={topic} className="h-40 animate-pulse rounded-2xl bg-slate-900" />
+            ))}
+          </div>
+        )}
+        {storiesError && <p className="mt-6 text-red-300">{storiesError}</p>}
+        {!storiesLoading && !storiesError && (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {stories.map((story) => (
+              <article key={story.url} className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <span className="rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                  {story.section}
+                </span>
+                <h3 className="mt-4 font-semibold leading-6">{story.title}</h3>
+                <a
+                  href={story.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-5 inline-block text-sm text-cyan-400 hover:text-cyan-300"
+                >
+                  Read more →
+                </a>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   )
