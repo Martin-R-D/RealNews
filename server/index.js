@@ -28,6 +28,7 @@ app.get('/top-stories', async (req, res) => {
 })
 
 app.post('/analyze', async (req, res) => {
+  const startTime = Date.now()
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -94,7 +95,15 @@ app.post('/analyze', async (req, res) => {
     send({ agent: 'judge', status: 'done' })
     send({
       type: 'result',
-      data: { topic, queries, articles, verdict },
+      data: {
+        topic,
+        queries,
+        articles,
+        verdict,
+        totalArticles: articles.length,
+        totalSources: results.filter((items) => items.length > 0).length,
+        durationSeconds: ((Date.now() - startTime) / 1000).toFixed(1),
+      },
     })
     res.end()
   } catch (error) {

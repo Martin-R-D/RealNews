@@ -111,6 +111,14 @@ export default function ResultsPage() {
           <h1 className="mt-2 text-3xl font-bold">{topic}</h1>
         </header>
 
+        <section className="rounded-2xl bg-gradient-to-r from-cyan-400/60 via-blue-500/60 to-purple-500/60 p-px shadow-lg shadow-cyan-950/30">
+          <div className="grid grid-cols-3 rounded-2xl bg-slate-900 p-5 text-center">
+            <Stat value={result?.totalArticles ?? 0} label="Articles Analyzed" />
+            <Stat value={result?.totalSources ?? 0} label="Sources Compared" />
+            <Stat value={result?.durationSeconds ?? '0.0'} label="Seconds" />
+          </div>
+        </section>
+
         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
             Neutral Summary
@@ -186,6 +194,17 @@ export default function ResultsPage() {
         </section>
       </div>
     </main>
+  )
+}
+
+function Stat({ value, label }) {
+  return (
+    <div className="border-slate-800 px-3 first:border-r last:border-l">
+      <div className="text-3xl font-bold text-white">{value}</div>
+      <div className="mt-1 text-xs uppercase tracking-wider text-slate-500">
+        {label}
+      </div>
+    </div>
   )
 }
 
