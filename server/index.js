@@ -7,7 +7,7 @@ const { orchestrate } = require('./agents/orchestrator')
 const { fetchGuardian } = require('./fetchers/guardianFetcher')
 const { fetchNYT } = require('./fetchers/nytFetcher')
 const { fetchTopStories } = require('./fetchers/nytTopStories')
-const { fetchRSS, RSS_SOURCES } = require('./fetchers/rssFetcher')
+const { fetchRSS, SOURCES } = require('./fetchers/rssFetcher')
 
 const app = express()
 const port = 3001
@@ -48,8 +48,8 @@ app.post('/analyze', async (req, res) => {
     send({ agent: 'orchestrator', status: 'done' })
 
     const query = queries.join(' OR ')
-    const fetchRSSQueries = (source, url) =>
-      Promise.all(queries.map((item) => fetchRSS(source, url, item))).then(
+    const fetchRSSQueries = (source) =>
+      Promise.all(queries.map((item) => fetchRSS(source, item))).then(
         (groups) =>
           [...new Map(groups.flat().map((article) => [article.url, article])).values()].slice(
             0,
@@ -57,9 +57,11 @@ app.post('/analyze', async (req, res) => {
           ),
       )
     const fetchers = [
-      ['BBC', () => fetchRSSQueries('BBC', RSS_SOURCES.BBC)],
-      ['Al Jazeera', () => fetchRSSQueries('Al Jazeera', RSS_SOURCES['Al Jazeera'])],
-      ['Fox News', () => fetchRSSQueries('Fox News', RSS_SOURCES['Fox News'])],
+      ...SOURCES.map((source) => [
+        source.name,
+        () => fetchRSSQueries(source),
+        source.location,
+      ]),
       ['The Guardian', () => fetchGuardian(query)],
       ['New York Times', () => fetchNYT(query)],
     ]
@@ -100,6 +102,9 @@ app.post('/analyze', async (req, res) => {
         queries,
         articles,
         verdict,
+        sourceLocations: fetchers
+          .filter(([, , location]) => location)
+          .map(([source, , location]) => ({ source, location })),
         heroImage: articles.find((article) => article.thumbnail)?.thumbnail || null,
         totalArticles: articles.length,
         totalSources: results.filter((items) => items.length > 0).length,
