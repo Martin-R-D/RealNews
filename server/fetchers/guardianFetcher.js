@@ -7,7 +7,7 @@ async function fetchGuardian(query) {
     params: {
       q: query,
       'api-key': process.env.GUARDIAN_API_KEY,
-      'show-fields': 'bodyText,headline',
+      'show-fields': 'bodyText,headline,thumbnail',
       'page-size': 3,
     },
   })
@@ -18,6 +18,7 @@ async function fetchGuardian(query) {
     content: result.fields?.bodyText?.replace(/<[^>]*>/g, '')?.slice(0, 300),
     url: result.webUrl,
     publishedAt: result.webPublicationDate,
+    thumbnail: result.fields?.thumbnail || null,
   }))
 }
 

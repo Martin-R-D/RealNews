@@ -16,8 +16,8 @@ export default function RecentAnalyses() {
   if (!history.length) return null
 
   return (
-    <section className="mx-auto max-w-6xl pb-8">
-      <h2 className="text-2xl font-semibold">Recently Analyzed</h2>
+    <section className="mx-auto max-w-6xl px-6 pb-12">
+      <h2 className="text-2xl font-bold">Recently Analyzed</h2>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {history.map((entry) => {
           const date = new Date(entry.analyzedAt)
@@ -30,10 +30,10 @@ export default function RecentAnalyses() {
                   state: { topic: entry.topic, cachedResults: entry.results },
                 })
               }
-              className="rounded-xl border border-slate-800 bg-slate-900 p-4 text-left transition hover:border-cyan-400"
+              className="rounded-2xl border border-[#E8EAF0] border-l-4 border-l-[#2563EB] bg-white p-6 text-left shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] transition hover:border-[#2563EB]"
             >
-              <strong className="block text-slate-100">{entry.topic}</strong>
-              <span className="mt-2 block text-xs text-slate-400">
+              <strong className="block text-[#0F1117]">{entry.topic}</strong>
+              <span className="mt-2 block text-xs text-[#6B7280]">
                 Analyzed on {date.toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
@@ -45,7 +45,7 @@ export default function RecentAnalyses() {
                   hour12: false,
                 })}
               </span>
-              <span className="mt-3 block text-sm text-slate-500">
+              <span className="mt-3 block text-sm text-[#6B7280]">
                 {entry.stats.totalSources} sources · {entry.stats.totalArticles} articles
               </span>
             </button>

@@ -5,15 +5,26 @@ const { parseJson } = require('./parseJson')
 
 async function judge(articles) {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-  const response = await groq.chat.completions.create({
-    model: 'openai/gpt-oss-20b',
-    messages: [{
-      role: 'user',
-      content: `Analyze these news articles and return ONLY valid JSON, with no explanation before or after. Be brief: maximum 2 sentences in every string field. Use this exact structure: {"sources":[{"source":"string","biasScore":0,"emotionalLanguage":["string"],"emphasis":"string","omissions":"string"}],"neutralSummary":"string","commonFacts":["string"],"missingContext":"string","overallBiasSpread":"string"}. biasScore is 0-100, where 0 is far left, 50 is center, and 100 is far right. Articles: ${JSON.stringify(articles)}`,
-    }],
-  })
+  const input = articles.map(({ source, title, content }) => ({
+    source,
+    title,
+    content,
+  }))
+  const prompt = `Return only valid JSON in this shape: {"sources":[{"source":"","biasScore":50,"emotionalLanguage":[],"emphasis":"","omissions":""}],"neutralSummary":"","commonFacts":[],"missingContext":"","overallBiasSpread":""}. Analyze these articles briefly. Use one short sentence per string, at most 3 commonFacts and 3 emotionalLanguage words. ${JSON.stringify(input)}`
 
-  return parseJson(response.choices[0].message.content)
+  for (const retryPrompt of [prompt, `${prompt} Do not use markdown fences.`]) {
+    const response = await groq.chat.completions.create({
+      model: 'openai/gpt-oss-20b',
+      messages: [{ role: 'user', content: retryPrompt }],
+      max_tokens: 1800,
+    })
+    try {
+      return parseJson(response.choices[0]?.message?.content || '')
+    } catch (error) {
+      if (retryPrompt === prompt) continue
+      throw new Error(`Groq returned invalid JSON: ${error.message}`)
+    }
+  }
 }
 
 module.exports = { judge }

@@ -100,6 +100,7 @@ app.post('/analyze', async (req, res) => {
         queries,
         articles,
         verdict,
+        heroImage: articles.find((article) => article.thumbnail)?.thumbnail || null,
         totalArticles: articles.length,
         totalSources: results.filter((items) => items.length > 0).length,
         durationSeconds: ((Date.now() - startTime) / 1000).toFixed(1),
