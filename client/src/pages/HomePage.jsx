@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import RecentAnalyses from '../components/RecentAnalyses.jsx'
 
 const topics = [
   'Israel-Palestine War',
@@ -84,6 +85,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      <RecentAnalyses />
 
       <section className="mx-auto max-w-6xl pb-16 pt-24">
         <h2 className="text-2xl font-semibold">What the world is talking about</h2>

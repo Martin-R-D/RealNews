@@ -31,6 +31,12 @@ export default function ResultsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (state?.cachedResults) {
+      setResult(state.cachedResults)
+      setLoading(false)
+      return undefined
+    }
+
     const controller = new AbortController()
 
     async function analyzeTopic() {
@@ -58,6 +64,27 @@ export default function ResultsPage() {
             if (event.type === 'result') {
               setResult(event.data)
               setLoading(false)
+              try {
+                const history = JSON.parse(
+                  localStorage.getItem('realnews_history') || '[]',
+                )
+                const entry = {
+                  topic,
+                  analyzedAt: new Date().toISOString(),
+                  results: event.data,
+                  stats: {
+                    totalArticles: event.data.totalArticles,
+                    totalSources: event.data.totalSources,
+                    durationSeconds: event.data.durationSeconds,
+                  },
+                }
+                localStorage.setItem(
+                  'realnews_history',
+                  JSON.stringify([entry, ...history].slice(0, 8)),
+                )
+              } catch {
+                // Storage may be unavailable or contain invalid data.
+              }
             } else if (event.error) {
               setError(event.error)
               setLoading(false)
