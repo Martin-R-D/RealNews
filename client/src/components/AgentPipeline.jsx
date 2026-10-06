@@ -38,7 +38,7 @@ function getState(events, name) {
 }
 
 export default function AgentPipeline({ events = [] }) {
-  const pipeline = ['Orchestrator', 'Analyst', 'Judge']
+  const pipeline = ['Orchestrator', 'Judge']
 
   return (
     <div className="flex w-full flex-col gap-3">
@@ -49,7 +49,6 @@ export default function AgentPipeline({ events = [] }) {
         ))}
       </div>
       <AgentState events={events} name={pipeline[1]} />
-      <AgentState events={events} name={pipeline[2]} />
     </div>
   )
 }

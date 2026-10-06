@@ -120,12 +120,12 @@ export default function ResultsPage() {
           </p>
         </section>
 
-        <BiasSpectrum analysis={result?.analysis || []} />
+        <BiasSpectrum analysis={result?.verdict?.sources || []} />
 
         <section>
           <h2 className="mb-4 text-2xl font-semibold">Source Cards</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {(result?.analysis || []).map((item) => (
+            {(result?.verdict?.sources || []).map((item) => (
               <article
                 key={item.source}
                 className="rounded-2xl border border-slate-800 bg-slate-900 p-5"

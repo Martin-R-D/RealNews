@@ -15,7 +15,7 @@ async function fetchGuardian(query) {
   return response.data.response.results.map((result) => ({
     source: 'The Guardian',
     title: result.fields?.headline || result.webTitle || '',
-    content: result.fields?.bodyText || '',
+    content: result.fields?.bodyText?.replace(/<[^>]*>/g, '')?.slice(0, 300),
     url: result.webUrl,
     publishedAt: result.webPublicationDate,
   }))

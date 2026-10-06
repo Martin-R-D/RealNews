@@ -2,7 +2,6 @@ require('dotenv').config()
 
 const cors = require('cors')
 const express = require('express')
-const { analyze } = require('./agents/analyst')
 const { judge } = require('./agents/judge')
 const { orchestrate } = require('./agents/orchestrator')
 const { fetchGuardian } = require('./fetchers/guardianFetcher')
@@ -72,31 +71,30 @@ app.post('/analyze', async (req, res) => {
           send({ agent: source, status: 'done', articlesFound: articles.length })
           return articles
         } catch (error) {
+          console.error(`${source} fetch failed:`, error.message)
           send({ agent: source, status: 'error', message: error.message })
           return []
         }
       }),
     )
+    console.log(
+      'Articles returned by source:',
+      fetchers
+        .map(([source], index) => `${source}: ${results[index].length}`)
+        .join(', '),
+    )
     const articles = results.flat()
-
-    send({
-      agent: 'analyst',
-      status: 'active',
-      message: 'Comparing sources...',
-    })
-    const analysis = await analyze(articles)
-    send({ agent: 'analyst', status: 'done' })
 
     send({
       agent: 'judge',
       status: 'active',
       message: 'Generating verdict...',
     })
-    const verdict = await judge(articles, analysis)
+    const verdict = await judge(articles)
     send({ agent: 'judge', status: 'done' })
     send({
       type: 'result',
-      data: { topic, queries, articles, analysis, verdict },
+      data: { topic, queries, articles, verdict },
     })
     res.end()
   } catch (error) {

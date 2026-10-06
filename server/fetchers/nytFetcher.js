@@ -14,7 +14,7 @@ async function fetchNYT(query) {
   return response.data.response.docs.slice(0, 3).map((article) => ({
     source: 'New York Times',
     title: article.headline?.main || '',
-    content: article.abstract || '',
+    content: article.abstract?.replace(/<[^>]*>/g, '')?.slice(0, 300),
     url: article.web_url,
     publishedAt: article.pub_date,
   }))
