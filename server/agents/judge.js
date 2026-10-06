@@ -10,7 +10,8 @@ async function judge(articles) {
     title,
     content,
   }))
-  const prompt = `Return only valid JSON in this shape: {"sources":[{"source":"","biasScore":50,"emotionalLanguage":[],"emphasis":"","omissions":""}],"neutralSummary":"","commonFacts":[],"missingContext":"","overallBiasSpread":""}. Analyze these articles briefly. Use one short sentence per string, at most 3 commonFacts and 3 emotionalLanguage words. ${JSON.stringify(input)}`
+  const sourceNames = [...new Set(articles.map((article) => article.source))]
+  const prompt = `Return only valid JSON in this shape: {"sources":[{"source":"SOURCE_NAME","biasScore":NUMBER_0_TO_100,"emotionalLanguage":[],"emphasis":"","omissions":""}],"neutralSummary":"","commonFacts":[],"missingContext":"","overallBiasSpread":""}. Return exactly one sources item for each of these source names: ${sourceNames.join(', ')}. Assess each biasScore independently from that source's wording, framing, emphasis, and omissions; do not use 50 as a default. Use one short sentence per string, at most 3 commonFacts and 3 emotionalLanguage words. ${JSON.stringify(input)}`
 
   for (const retryPrompt of [prompt, `${prompt} Do not use markdown fences.`]) {
     const response = await groq.chat.completions.create({

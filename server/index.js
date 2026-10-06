@@ -44,12 +44,12 @@ app.post('/analyze', async (req, res) => {
       status: 'active',
       message: 'Generating search queries...',
     })
-    const queries = await orchestrate(topic)
-    send({ agent: 'orchestrator', status: 'done' })
+    const { searchQueries, selectedSources } = await orchestrate(topic)
+    send({ agent: 'orchestrator', status: 'done', selectedSources })
 
-    const query = queries.join(' OR ')
+    const query = searchQueries.join(' OR ')
     const fetchRSSQueries = (source) =>
-      Promise.all(queries.map((item) => fetchRSS(source, item))).then(
+      Promise.all(searchQueries.map((item) => fetchRSS(source, item))).then(
         (groups) =>
           [...new Map(groups.flat().map((article) => [article.url, article])).values()].slice(
             0,
@@ -57,7 +57,7 @@ app.post('/analyze', async (req, res) => {
           ),
       )
     const fetchers = [
-      ...SOURCES.map((source) => [
+      ...SOURCES.filter((source) => selectedSources.includes(source.name)).map((source) => [
         source.name,
         () => fetchRSSQueries(source),
         source.location,
@@ -99,7 +99,8 @@ app.post('/analyze', async (req, res) => {
       type: 'result',
       data: {
         topic,
-        queries,
+        queries: searchQueries,
+        selectedSources,
         articles,
         verdict,
         sourceLocations: fetchers

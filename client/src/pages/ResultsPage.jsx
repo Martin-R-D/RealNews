@@ -111,7 +111,12 @@ export default function ResultsPage() {
       <main className="min-h-screen bg-[#F8F9FB] px-6 py-10 text-[#0F1117]">
         <div className="mx-auto max-w-5xl">
           <h1 className="mb-8 text-3xl font-bold text-[#0F1117]">Analyzing: {topic}</h1>
-          <AgentPipeline events={events} />
+          <AgentPipeline
+            events={events}
+            selectedSources={
+              events.find((event) => event.agent === 'orchestrator')?.selectedSources
+            }
+          />
         </div>
       </main>
     )
