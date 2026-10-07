@@ -13,6 +13,16 @@ export default function RecentAnalyses() {
     }
   }, [])
 
+  function removeAnalysis(analyzedAt) {
+    try {
+      const nextHistory = history.filter((entry) => entry.analyzedAt !== analyzedAt)
+      localStorage.setItem('realnews_history', JSON.stringify(nextHistory))
+      setHistory(nextHistory)
+    } catch {
+      setHistory((current) => current.filter((entry) => entry.analyzedAt !== analyzedAt))
+    }
+  }
+
   if (!history.length) return null
 
   return (
@@ -22,14 +32,22 @@ export default function RecentAnalyses() {
         {history.map((entry) => {
           const date = new Date(entry.analyzedAt)
           return (
-            <button
+            <div
               key={entry.analyzedAt}
-              type="button"
+              role="button"
+              tabIndex={0}
               onClick={() =>
                 navigate('/results', {
                   state: { topic: entry.topic, cachedResults: entry.results },
                 })
               }
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  navigate('/results', {
+                    state: { topic: entry.topic, cachedResults: entry.results },
+                  })
+                }
+              }}
               className="rounded-2xl border border-[#E8EAF0] border-l-4 border-l-[#2563EB] bg-white p-6 text-left shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] transition hover:border-[#2563EB]"
             >
               <strong className="block text-[#0F1117]">{entry.topic}</strong>
@@ -48,7 +66,17 @@ export default function RecentAnalyses() {
               <span className="mt-3 block text-sm text-[#6B7280]">
                 {entry.stats.totalSources} sources · {entry.stats.totalArticles} articles
               </span>
-            </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  removeAnalysis(entry.analyzedAt)
+                }}
+                className="mt-4 text-sm font-medium text-[#DC2626] transition hover:text-red-800"
+              >
+                Delete
+              </button>
+            </div>
           )
         })}
       </div>
