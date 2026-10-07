@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AgentPipeline from '../components/AgentPipeline.jsx'
+import WorldMap from '../components/WorldMap.jsx'
 
 function parseEvents(buffer) {
   const parts = buffer.split('\n\n')
@@ -29,6 +30,10 @@ export default function ResultsPage() {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const selectedSources =
+    events.find((event) => Array.isArray(event.selectedSources))?.selectedSources ||
+    result?.sourceLocations ||
+    []
 
   useEffect(() => {
     if (state?.cachedResults) {
@@ -111,12 +116,8 @@ export default function ResultsPage() {
       <main className="min-h-screen bg-[#F8F9FB] px-6 py-10 text-[#0F1117]">
         <div className="mx-auto max-w-5xl">
           <h1 className="mb-8 text-3xl font-bold text-[#0F1117]">Analyzing: {topic}</h1>
-          <AgentPipeline
-            events={events}
-            selectedSources={
-              events.find((event) => event.agent === 'orchestrator')?.selectedSources
-            }
-          />
+          <AgentPipeline events={events} selectedSources={selectedSources} />
+          <WorldMap events={events} selectedSources={selectedSources} />
         </div>
       </main>
     )
@@ -152,6 +153,12 @@ export default function ResultsPage() {
           </p>
           <h1 className="mt-2 text-3xl font-bold">{topic}</h1>
         </header>
+
+        <WorldMap
+          events={events}
+          selectedSources={result?.sourceLocations || selectedSources}
+          final
+        />
 
         <section>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
