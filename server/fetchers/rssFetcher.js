@@ -52,9 +52,10 @@ async function fetchRSS(source, query) {
       source: source.name,
       location: source.location,
       title: item.title || '',
-      content: (item.content || item.contentSnippet || item.description || '')
-        .replace(/<[^>]*>/g, '')
-        .slice(0, 300),
+      ...(() => {
+        const raw = (item.content || item.contentSnippet || item.description || '').replace(/<[^>]*>/g, '')
+        return { contentShort: raw.slice(0, 300), contentFull: raw.slice(0, 800) }
+      })(),
       url: item.link || item.guid || '',
       publishedAt: item.isoDate || item.pubDate || null,
     }))

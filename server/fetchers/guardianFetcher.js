@@ -12,14 +12,19 @@ async function fetchGuardian(query) {
     },
   })
 
-  return response.data.response.results.map((result) => ({
-    source: 'The Guardian',
-    title: result.fields?.headline || result.webTitle || '',
-    content: result.fields?.bodyText?.replace(/<[^>]*>/g, '')?.slice(0, 300),
-    url: result.webUrl,
-    publishedAt: result.webPublicationDate,
-    thumbnail: result.fields?.thumbnail || null,
-  }))
+  return response.data.response.results.map((result) => {
+    const raw = result.fields?.bodyText?.replace(/<[^>]*>/g, '') || ''
+    return {
+      source: 'The Guardian',
+      title: result.fields?.headline || result.webTitle || '',
+      contentShort: raw.slice(0, 300),
+      contentFull: raw.slice(0, 800),
+      url: result.webUrl,
+      publishedAt: result.webPublicationDate,
+      thumbnail: result.fields?.thumbnail || null,
+      location: { lat: 51.5, lng: -0.1, city: 'London' },
+    }
+  })
 }
 
 module.exports = { fetchGuardian }

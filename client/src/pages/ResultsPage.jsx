@@ -187,6 +187,21 @@ export default function ResultsPage() {
                 key={item.source}
                 className="rounded-2xl border border-[#E8EAF0] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]"
               >
+                {(() => {
+                  const article = result?.articles?.find(
+                    (candidate) => candidate.source === item.source,
+                  )
+                  return article?.contentFull ? (
+                    <div className="mb-5 border-b border-[#E8EAF0] pb-5">
+                      <p className="text-xs font-medium text-[#6B7280]">
+                        Article
+                      </p>
+                      <p className="mt-2 leading-7 text-[#6B7280]">
+                        {article.contentFull}
+                      </p>
+                    </div>
+                  ) : null
+                })()}
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="font-semibold text-[#0F1117]">{item.source}</h3>
                   <span className={`rounded-full px-3 py-1 text-sm font-medium ${biasClass(item.biasScore)}`}>

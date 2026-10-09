@@ -16,16 +16,19 @@ async function fetchNYT(query) {
       ? article.multimedia
       : []
 
+    const raw = article.abstract?.replace(/<[^>]*>/g, '') || ''
     return {
       source: 'New York Times',
       title: article.headline?.main || '',
-      content: article.abstract?.replace(/<[^>]*>/g, '')?.slice(0, 300),
+      contentShort: raw.slice(0, 300),
+      contentFull: raw.slice(0, 800),
       url: article.web_url,
       publishedAt: article.pub_date,
       thumbnail:
         multimedia.find((item) => item.format === 'mediumThreeByTwo440')?.url ||
         multimedia[0]?.url ||
         null,
+      location: { lat: 40.7, lng: -74, city: 'New York' },
     }
   })
 }

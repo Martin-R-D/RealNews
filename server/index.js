@@ -87,13 +87,18 @@ app.post('/analyze', async (req, res) => {
         .join(', '),
     )
     const articles = results.flat()
+    const analysisArticles = articles.map(({ source, title, contentShort }) => ({
+      source,
+      title,
+      contentShort,
+    }))
 
     send({
       agent: 'judge',
       status: 'active',
       message: 'Generating verdict...',
     })
-    const verdict = await judge(articles)
+    const verdict = await judge(analysisArticles)
     send({ agent: 'judge', status: 'done' })
     send({
       type: 'result',
