@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AgentPipeline from '../components/AgentPipeline.jsx'
+import HighlightPopup from '../components/HighlightPopup.jsx'
 import WorldMap from '../components/WorldMap.jsx'
 
 function parseEvents(buffer) {
@@ -30,10 +31,66 @@ export default function ResultsPage() {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [highlightPopup, setHighlightPopup] = useState(null)
+  const [highlightLoading, setHighlightLoading] = useState(false)
+  const [highlightResult, setHighlightResult] = useState(null)
   const selectedSources =
     events.find((event) => Array.isArray(event.selectedSources))?.selectedSources ||
     result?.sourceLocations ||
     []
+
+  useEffect(() => {
+    const handleMouseUp = () => {
+      const selection = window.getSelection()
+      const selectedText = selection?.toString().trim()
+      if (!selectedText || selectedText.length < 20 || !selection?.rangeCount) return
+      const anchorNode = selection.anchorNode
+      const sourceCard = anchorNode?.parentElement?.closest('[data-source]')
+      if (!sourceCard) return
+      const range = selection.getRangeAt(0)
+      const rect = range.getBoundingClientRect()
+      setHighlightResult(null)
+      setHighlightPopup({
+        text: selectedText,
+        sourceName: sourceCard.getAttribute('data-source'),
+        x: rect.left + rect.width / 2,
+        y: rect.top + window.scrollY - 10,
+      })
+    }
+    const closePopup = () => setHighlightPopup(null)
+    document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('mousedown', closePopup)
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.removeEventListener('mousedown', closePopup)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!highlightPopup) return undefined
+    const controller = new AbortController()
+    setHighlightLoading(true)
+    fetch('/api/highlight', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        selectedText: highlightPopup.text,
+        sourceName: highlightPopup.sourceName,
+        allArticles: result?.articles || [],
+      }),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error((await response.json()).error || 'Unable to analyze selection')
+        return response.json()
+      })
+      .then(setHighlightResult)
+      .catch((requestError) => {
+        if (requestError.name !== 'AbortError') setHighlightPopup(null)
+      })
+      .finally(() => setHighlightLoading(false))
+    return () => controller.abort()
+  }, [highlightPopup, result?.articles])
 
   useEffect(() => {
     if (state?.cachedResults) {
@@ -185,6 +242,7 @@ export default function ResultsPage() {
             {(result?.verdict?.sources || []).map((item) => (
               <article
                 key={item.source}
+                data-source={item.source}
                 className="rounded-2xl border border-[#E8EAF0] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]"
               >
                 {(() => {
@@ -261,6 +319,14 @@ export default function ResultsPage() {
           </p>
         </section>
       </div>
+      {highlightPopup && (
+        <HighlightPopup
+          popup={highlightPopup}
+          loading={highlightLoading}
+          result={highlightResult}
+          onClose={() => setHighlightPopup(null)}
+        />
+      )}
     </main>
   )
 }

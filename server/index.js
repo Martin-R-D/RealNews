@@ -2,6 +2,8 @@ require('dotenv').config()
 
 const cors = require('cors')
 const express = require('express')
+const Groq = require('groq-sdk')
+const { parseJson } = require('./agents/parseJson')
 const { judge } = require('./agents/judge')
 const { orchestrate } = require('./agents/orchestrator')
 const { fetchGuardian } = require('./fetchers/guardianFetcher')
@@ -24,6 +26,46 @@ app.get('/top-stories', async (req, res) => {
     res.json(await fetchTopStories(req.query.section || 'home'))
   } catch (error) {
     res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/highlight', async (req, res) => {
+  const { selectedText, sourceName, allArticles } = req.body
+  if (
+    typeof selectedText !== 'string' ||
+    typeof sourceName !== 'string' ||
+    !Array.isArray(allArticles)
+  ) {
+    return res.status(400).json({ error: 'Invalid highlight request' })
+  }
+
+  try {
+    const comparisons = allArticles
+      .filter((article) => article?.source && article.source !== sourceName)
+      .map((article) => `${article.source}: ${(article.contentFull || '').slice(0, 300)}`)
+      .join('\n')
+    const prompt = `A user highlighted this sentence from ${sourceName}: '${selectedText}'
+
+Here is how other sources covered the same story:
+${comparisons}
+
+Return ONLY valid JSON:
+{
+  "biasScore": number (0-100),
+  "neutralVersion": string (one sentence, most neutral way to say this),
+  "howOthersSaidIt": [
+    { "source": string, "quote": string (most similar sentence from their content, max 100 chars) }
+  ]
+}`
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+    const response = await groq.chat.completions.create({
+      model: 'openai/gpt-oss-20b',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 1000,
+    })
+    res.json(parseJson(response.choices[0]?.message?.content || ''))
+  } catch (error) {
+    res.status(502).json({ error: `Highlight analysis failed: ${error.message}` })
   }
 })
 
