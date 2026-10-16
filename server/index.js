@@ -5,6 +5,7 @@ const express = require('express')
 const Groq = require('groq-sdk')
 const { parseJson } = require('./agents/parseJson')
 const { judge } = require('./agents/judge')
+const { compareCoverage } = require('./agents/coverage')
 const { orchestrate } = require('./agents/orchestrator')
 const { fetchGuardian } = require('./fetchers/guardianFetcher')
 const { fetchNYT } = require('./fetchers/nytFetcher')
@@ -140,7 +141,13 @@ app.post('/analyze', async (req, res) => {
       status: 'active',
       message: 'Generating verdict...',
     })
-    const verdict = await judge(analysisArticles)
+    const [verdict, coverage] = await Promise.all([
+      judge(analysisArticles),
+      compareCoverage(articles).catch((error) => {
+        console.error('Coverage comparison failed:', error.message)
+        return { status: 'unavailable', findings: [] }
+      }),
+    ])
     send({ agent: 'judge', status: 'done' })
     send({
       type: 'result',
@@ -150,6 +157,7 @@ app.post('/analyze', async (req, res) => {
         selectedSources,
         articles,
         verdict,
+        coverage,
         sourceLocations: fetchers
           .filter(([, , location]) => location)
           .map(([source, , location]) => ({ source, location })),
@@ -168,6 +176,10 @@ app.post('/analyze', async (req, res) => {
   }
 })
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`)
-})
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}`)
+  })
+}
+
+module.exports = { app }

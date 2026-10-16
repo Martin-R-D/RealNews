@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import AgentPipeline from '../components/AgentPipeline.jsx'
 import HighlightPopup from '../components/HighlightPopup.jsx'
 import WorldMap from '../components/WorldMap.jsx'
+import CoverageDifferences from '../components/CoverageDifferences.jsx'
 
 function parseEvents(buffer) {
   const parts = buffer.split('\n\n')
@@ -233,6 +234,8 @@ export default function ResultsPage() {
             {result?.verdict?.neutralSummary || result?.neutralSummary}
           </p>
         </section>
+
+        <CoverageDifferences coverage={result?.coverage} articles={result?.articles || []} />
 
         <BiasSpectrum analysis={result?.verdict?.sources || []} />
 
