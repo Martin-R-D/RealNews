@@ -4,6 +4,9 @@ import AgentPipeline from '../components/AgentPipeline.jsx'
 import HighlightPopup from '../components/HighlightPopup.jsx'
 import WorldMap from '../components/WorldMap.jsx'
 import CoverageDifferences from '../components/CoverageDifferences.jsx'
+import useHighlight from '../hooks/useHighlight'
+
+const EMPTY_ARTICLES = []
 
 function parseEvents(buffer) {
   const parts = buffer.split('\n\n')
@@ -32,66 +35,11 @@ export default function ResultsPage() {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [highlightPopup, setHighlightPopup] = useState(null)
-  const [highlightLoading, setHighlightLoading] = useState(false)
-  const [highlightResult, setHighlightResult] = useState(null)
+  const highlight = useHighlight(result?.articles || EMPTY_ARTICLES)
   const selectedSources =
     events.find((event) => Array.isArray(event.selectedSources))?.selectedSources ||
     result?.sourceLocations ||
     []
-
-  useEffect(() => {
-    const handleMouseUp = () => {
-      const selection = window.getSelection()
-      const selectedText = selection?.toString().trim()
-      if (!selectedText || selectedText.length < 20 || !selection?.rangeCount) return
-      const anchorNode = selection.anchorNode
-      const sourceCard = anchorNode?.parentElement?.closest('[data-source]')
-      if (!sourceCard) return
-      const range = selection.getRangeAt(0)
-      const rect = range.getBoundingClientRect()
-      setHighlightResult(null)
-      setHighlightPopup({
-        text: selectedText,
-        sourceName: sourceCard.getAttribute('data-source'),
-        x: rect.left + rect.width / 2,
-        y: rect.top + window.scrollY - 10,
-      })
-    }
-    const closePopup = () => setHighlightPopup(null)
-    document.addEventListener('mouseup', handleMouseUp)
-    document.addEventListener('mousedown', closePopup)
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp)
-      document.removeEventListener('mousedown', closePopup)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!highlightPopup) return undefined
-    const controller = new AbortController()
-    setHighlightLoading(true)
-    fetch('/api/highlight', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        selectedText: highlightPopup.text,
-        sourceName: highlightPopup.sourceName,
-        allArticles: result?.articles || [],
-      }),
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error((await response.json()).error || 'Unable to analyze selection')
-        return response.json()
-      })
-      .then(setHighlightResult)
-      .catch((requestError) => {
-        if (requestError.name !== 'AbortError') setHighlightPopup(null)
-      })
-      .finally(() => setHighlightLoading(false))
-    return () => controller.abort()
-  }, [highlightPopup, result?.articles])
 
   useEffect(() => {
     if (state?.cachedResults) {
@@ -257,7 +205,11 @@ export default function ResultsPage() {
                       <p className="text-xs font-medium text-[#6B7280]">
                         Article
                       </p>
-                      <p className="mt-2 leading-7 text-[#6B7280]">
+                      <p
+                        data-highlight-source={item.source}
+                        data-article-id={result.articles.indexOf(article)}
+                        className="mt-2 leading-7 text-[#6B7280]"
+                      >
                         {article.contentFull}
                       </p>
                     </div>
@@ -322,14 +274,7 @@ export default function ResultsPage() {
           </p>
         </section>
       </div>
-      {highlightPopup && (
-        <HighlightPopup
-          popup={highlightPopup}
-          loading={highlightLoading}
-          result={highlightResult}
-          onClose={() => setHighlightPopup(null)}
-        />
-      )}
+      {highlight.popup && <HighlightPopup {...highlight} />}
     </main>
   )
 }

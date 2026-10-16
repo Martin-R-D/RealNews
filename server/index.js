@@ -2,8 +2,7 @@ require('dotenv').config()
 
 const cors = require('cors')
 const express = require('express')
-const Groq = require('groq-sdk')
-const { parseJson } = require('./agents/parseJson')
+const { prepareHighlight, analyzeHighlight } = require('./agents/highlight')
 const { judge } = require('./agents/judge')
 const { compareCoverage } = require('./agents/coverage')
 const { orchestrate } = require('./agents/orchestrator')
@@ -31,42 +30,29 @@ app.get('/top-stories', async (req, res) => {
 })
 
 app.post('/highlight', async (req, res) => {
-  const { selectedText, sourceName, allArticles } = req.body
-  if (
-    typeof selectedText !== 'string' ||
-    typeof sourceName !== 'string' ||
-    !Array.isArray(allArticles)
-  ) {
-    return res.status(400).json({ error: 'Invalid highlight request' })
-  }
-
+  let input
   try {
-    const comparisons = allArticles
-      .filter((article) => article?.source && article.source !== sourceName)
-      .map((article) => `${article.source}: ${(article.contentFull || '').slice(0, 300)}`)
-      .join('\n')
-    const prompt = `A user highlighted this sentence from ${sourceName}: '${selectedText}'
-
-Here is how other sources covered the same story:
-${comparisons}
-
-Return ONLY valid JSON:
-{
-  "biasScore": number (0-100),
-  "neutralVersion": string (one sentence, most neutral way to say this),
-  "howOthersSaidIt": [
-    { "source": string, "quote": string (most similar sentence from their content, max 100 chars) }
-  ]
-}`
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-    const response = await groq.chat.completions.create({
-      model: 'openai/gpt-oss-20b',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 1000,
-    })
-    res.json(parseJson(response.choices[0]?.message?.content || ''))
+    input = prepareHighlight(req.body)
   } catch (error) {
-    res.status(502).json({ error: `Highlight analysis failed: ${error.message}` })
+    return res.status(400).json({ error: error.message })
+  }
+  const controller = new AbortController()
+  const disconnect = () => { if (!res.writableEnded) controller.abort() }
+  res.on('close', disconnect)
+  const timer = setTimeout(() => controller.abort(), 15000)
+  try {
+    const result = await analyzeHighlight(input, { signal: controller.signal })
+    if (!res.destroyed) res.json(result)
+  } catch (error) {
+    if (!res.destroyed) {
+      const timedOut = controller.signal.aborted || error.name === 'APIConnectionTimeoutError'
+      res.status(timedOut ? 504 : 502).json({
+        error: timedOut ? 'Analysis took too long. Please try again.' : 'Selection analysis failed. Please try again.',
+      })
+    }
+  } finally {
+    clearTimeout(timer)
+    res.off('close', disconnect)
   }
 })
 
