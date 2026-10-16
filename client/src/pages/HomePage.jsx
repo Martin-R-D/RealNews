@@ -59,7 +59,7 @@ export default function HomePage() {
 
         <form
           onSubmit={handleSubmit}
-          className="mt-12 flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#E8EAF0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] focus-within:border-2 focus-within:border-[#2563EB] focus-within:shadow-lg sm:flex-row"
+          className="mt-12 flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#E8EAF0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] transition-shadow duration-200 focus-within:border-[#2563EB] focus-within:ring-4 focus-within:ring-blue-100 sm:flex-row"
         >
           <input
             type="text"
