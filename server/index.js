@@ -9,6 +9,7 @@ const { orchestrate } = require('./agents/orchestrator')
 const { fetchGuardian } = require('./fetchers/guardianFetcher')
 const { fetchNYT } = require('./fetchers/nytFetcher')
 const { fetchTopStories } = require('./fetchers/nytTopStories')
+const { getStoryFeed } = require('./services/storyFeed')
 const { fetchRSS, SOURCES } = require('./fetchers/rssFetcher')
 
 const app = express()
@@ -26,6 +27,14 @@ app.get('/top-stories', async (req, res) => {
     res.json(await fetchTopStories(req.query.section || 'home'))
   } catch (error) {
     res.status(500).json({ error: error.message })
+  }
+})
+
+app.get('/stories', async (_req, res) => {
+  try {
+    res.json(await getStoryFeed())
+  } catch {
+    res.status(503).json({ error: 'The news desk is temporarily unavailable. Please try again.' })
   }
 })
 

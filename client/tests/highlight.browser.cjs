@@ -13,7 +13,7 @@ const answer = (neutralVersion) => ({ biasScore: 12, neutralVersion, howOthersSa
   page.on('pageerror', e => errors.push(e.message))
   const result = { articles: [{ source: 'Example A', title: 'Bridge', contentFull: text }, { source: 'Example B', title: 'Bridge', contentFull: 'The bridge will close for repairs.' }], verdict: { neutralSummary: 'Repairs planned.', sources: [{ source: 'Example A', biasScore: 12, emphasis: 'Repair schedule and shuttle service', omissions: 'None identified.' }, { source: 'Example B', biasScore: 10 }] }, totalArticles: 2, totalSources: 2, sourceLocations: [] }
   await page.addInitScript(({ result }) => localStorage.setItem('realnews_history', JSON.stringify([{ topic: 'Browser highlight check', analyzedAt: new Date().toISOString(), results: result, stats: { totalArticles: 2, totalSources: 2 } }])), { result })
-  await page.route('**/top-stories*', route => route.fulfill({ json: [] }))
+  await page.route('**/api/stories', route => route.fulfill({ json: { stories: [], sourceCount: 0 } }))
   let calls = 0
   let mode = 'normal'
   await page.route('**/api/highlight', async route => {
