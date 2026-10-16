@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RecentAnalyses from '../components/RecentAnalyses.jsx'
 import StoryCard from '../components/StoryCard.jsx'
+import AppHeader from '../components/AppHeader.jsx'
 
 const topics = ['Climate Change', 'AI Regulation', 'US Elections', 'Ukraine War']
 
@@ -45,18 +46,10 @@ export default function HomePage() {
 
   return (
     <main className="news-home min-h-screen text-[#13213b]">
-      <nav className="news-nav">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
-          <a href="/" aria-label="RealNews home" className="flex items-center gap-2.5 text-xl font-bold tracking-tight">
-            <span className="news-mark" aria-hidden="true">r<span>.</span></span> RealNews<span className="text-[#2563eb]">.</span>
-          </a>
-          <a href="#news-desk" className="news-nav-link">The news desk <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className="h-3 w-3" aria-hidden="true"><path d="m4 4 8 8M4 12h8V4" /></svg></a>
-          <span className="hidden text-xs text-[#7c8596] sm:block">Independent perspectives. One place.</span>
-        </div>
-      </nav>
+      <AppHeader />
 
       <section className="news-hero mx-auto max-w-7xl px-5 pb-12 pt-12 sm:px-8 sm:pb-16 sm:pt-16">
-        <div className="news-eyebrow"><span className="h-1.5 w-1.5 rounded-full bg-[#2563eb]" /> A LITTLE CONTEXT CHANGES EVERYTHING</div>
+        <div className="news-eyebrow"><span className="h-1.5 w-1.5 rounded-full bg-[#2563eb]" /> THE WORLD IS BIGGER THAN A HEADLINE</div>
         <div className="mt-5 grid grid-cols-1 items-end gap-7 lg:grid-cols-[1.25fr_1fr] lg:gap-16">
           <h1 className="news-hero-title">One story.<br /><span>Every perspective.</span></h1>
           <div className="pb-1">
@@ -108,7 +101,7 @@ export default function HomePage() {
           {!!stories.length && <p className="mt-7 text-center text-xs leading-5 text-[#8a95a6]">Stories are grouped by event. Headlines and excerpts belong to their publishers. Open an analysis to investigate differences.</p>}
         </>}
       </section>
-      <div className="mx-auto max-w-7xl border-t border-[#e1e6ef] pt-10"><RecentAnalyses /></div>
+      <RecentAnalyses />
       <footer className="mx-auto flex max-w-7xl flex-wrap justify-between gap-3 px-5 pb-8 pt-4 text-xs text-[#8a95a6] sm:px-8"><span>RealNews. Make room for another perspective.</span><a href="#" className="hover:text-blue-600">Back to top</a></footer>
     </main>
   )

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import { ArrowIcon } from './AppHeader'
 
 function scoreClass(score) {
   if (score < 40) return 'bg-[#F0FDF4] text-[#16A34A]'
@@ -41,7 +42,7 @@ export default function HighlightPopup({ popup, loading, result, error, onClose,
       role="dialog"
       aria-label="Selection analysis"
       aria-busy={loading}
-      className="fixed z-[1000] w-[calc(100vw-24px)] max-w-[480px] max-h-[calc(100dvh-24px)] overflow-y-auto rounded-xl border border-[#E8EAF0] bg-white p-4 shadow-lg"
+      className="highlight-dialog"
       style={position}
       onPointerDown={(event) => event.stopPropagation()}
       onPointerUp={(event) => event.stopPropagation()}
@@ -50,13 +51,13 @@ export default function HighlightPopup({ popup, loading, result, error, onClose,
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-3 top-2 text-lg text-[#6B7280] hover:text-[#0F1117]"
+        className="highlight-close"
         aria-label="Close comparison"
       >
-        ×
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18" aria-hidden="true"><path d="m5 5 10 10M5 15 15 5" /></svg>
       </button>
-      <p className="pr-5 text-xs text-[#6B7280]">Selected from {popup.sourceName}</p>
-      <p className="mt-2 line-clamp-2 italic text-[#0F1117]">{popup.text}</p>
+      <p className="highlight-source">Selected from {popup.sourceName}</p>
+      <p className="highlight-selection">{popup.text}</p>
       <div className="my-3 border-t border-[#E8EAF0]" />
       {error && (
         <div role="alert" className="space-y-2 text-sm text-red-700">
@@ -91,7 +92,7 @@ export default function HighlightPopup({ popup, loading, result, error, onClose,
                   </span>
                   <blockquote className="text-[#6B7280]">“{item.quote}”</blockquote>
                   {/^https?:\/\//i.test(item.url || '') && (
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-blue-700 underline">Read original article ↗</a>
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-blue-700 underline">Read original article <ArrowIcon /></a>
                   )}
                 </div>
               ))}

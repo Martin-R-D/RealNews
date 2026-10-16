@@ -29,8 +29,9 @@ export default function CoverageDifferences({ coverage, articles = [] }) {
         : 'No supported coverage differences were identified in the available excerpts. This does not mean the articles cover every detail equally.'
 
   return (
-    <section aria-labelledby="coverage-heading" className="rounded-2xl border border-[#E8EAF0] bg-white p-6 shadow-sm">
-      <h2 id="coverage-heading" className="text-2xl font-bold">Coverage differences</h2>
+    <section aria-labelledby="coverage-heading" className="surface coverage-panel">
+      <p className="section-kicker">WHAT EACH ACCOUNT BRINGS TO THE STORY</p>
+      <h2 id="coverage-heading" className="panel-title mt-2">Coverage differences</h2>
       <p className="mt-3 text-sm leading-6 text-[#6B7280]">
         Details that appear in some accounts but are not found or are disputed in others.
         Comparisons use excerpts and abstracts, not complete articles. “Not found” does not
@@ -43,8 +44,8 @@ export default function CoverageDifferences({ coverage, articles = [] }) {
           const sources = new Set(rows.map((row) => articles[row.articleId].source))
           const mentioning = new Set(rows.filter((row) => row.status === 'mentioned').map((row) => articles[row.articleId].source))
           return (
-            <details key={index} className="rounded-xl border border-[#E8EAF0] p-4">
-              <summary className="cursor-pointer rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">
+            <details key={index} className="coverage-finding">
+              <summary className="coverage-summary">
                 <span className="font-semibold">{finding.detail}</span>
                 <span className="mt-1 block text-sm text-[#6B7280]">
                   Mentioned in {mentioning.size} of {sources.size} compared sources · View passages

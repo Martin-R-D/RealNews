@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react'
 import { divIcon } from 'leaflet'
-import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet'
+import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
 const CENTER = [20, 10]
@@ -44,7 +45,28 @@ function sourceState(events, name, final) {
   return event || { status: 'waiting' }
 }
 
+function ResizeMap({ compact }) {
+  const map = useMap()
+  useEffect(() => {
+    if (compact) map.dragging.disable()
+    else map.dragging.enable()
+  }, [compact, map])
+  useEffect(() => {
+    const observer = new ResizeObserver(() => map.invalidateSize({ animate: false }))
+    observer.observe(map.getContainer())
+    return () => observer.disconnect()
+  }, [map])
+  return null
+}
+
 export default function WorldMap({ events = [], selectedSources = [], final = false }) {
+  const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 767px)').matches)
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 767px)')
+    const update = () => setCompact(query.matches)
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
   const sources = [
     ...selectedSources.map((source) =>
       typeof source === 'string'
@@ -64,16 +86,19 @@ export default function WorldMap({ events = [], selectedSources = [], final = fa
   )
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#E8EAF0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]">
-      <div className="px-4 py-3 text-sm font-semibold text-[#0F1117]">Live Source Map</div>
+    <section className="surface source-map">
+      <div className="map-heading"><div><p className="section-kicker">THE GEOGRAPHY OF COVERAGE</p><h2 className="panel-title">Source map</h2></div><span>{sources.length} locations</span></div>
       <MapContainer
         center={CENTER}
-        zoom={2}
-        minZoom={2}
+        zoom={1}
+        minZoom={1}
         maxZoom={5}
         scrollWheelZoom={false}
-        style={{ width: '100%', height: 420 }}
+        className="map-canvas"
+        dragging={!compact}
+        style={{ width: '100%' }}
       >
+        <ResizeMap compact={compact} />
         <TileLayer
           url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -110,7 +135,7 @@ export default function WorldMap({ events = [], selectedSources = [], final = fa
                   <span className="text-[#6B7280]">{source.location.city}</span>
                   <br />
                   {done
-                    ? `${state.articlesFound || 0} articles found`
+                    ? final ? 'Publisher location' : `${state.articlesFound || 0} articles found`
                     : active
                       ? 'Fetching...'
                       : 'Waiting...'}
@@ -128,11 +153,11 @@ export default function WorldMap({ events = [], selectedSources = [], final = fa
             />
           ))}
       </MapContainer>
-      <div className="flex gap-4 px-4 py-3 text-xs text-[#6B7280]">
-        <span>● Grey = waiting</span>
-        <span className="text-[#2563EB]">● Blue = fetching</span>
-        <span className="text-[#16A34A]">● Green = done</span>
+      <div className="map-legend">
+        {final ? <span>Explore where these publishers are based.</span> : <><span>Waiting</span>
+        <span className="text-[#2563EB]">Fetching</span>
+        <span className="text-[#16A34A]">Complete</span></>}
       </div>
-    </div>
+    </section>
   )
 }

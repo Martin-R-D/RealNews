@@ -1,85 +1,35 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowIcon } from './AppHeader'
 
 export default function RecentAnalyses() {
-  const [history, setHistory] = useState([])
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('realnews_history') || '[]')
+      return Array.isArray(saved) ? saved : []
+    } catch { return [] }
+  })
   const navigate = useNavigate()
 
-  useEffect(() => {
-    try {
-      setHistory(JSON.parse(localStorage.getItem('realnews_history') || '[]'))
-    } catch {
-      setHistory([])
-    }
-  }, [])
-
   function removeAnalysis(analyzedAt) {
-    try {
-      const nextHistory = history.filter((entry) => entry.analyzedAt !== analyzedAt)
-      localStorage.setItem('realnews_history', JSON.stringify(nextHistory))
-      setHistory(nextHistory)
-    } catch {
-      setHistory((current) => current.filter((entry) => entry.analyzedAt !== analyzedAt))
-    }
+    const next = history.filter((entry) => entry.analyzedAt !== analyzedAt)
+    setHistory(next)
+    try { localStorage.setItem('realnews_history', JSON.stringify(next)) } catch { /* The library remains usable when storage is full. */ }
   }
 
-  if (!history.length) return null
-
-  return (
-    <section className="mx-auto max-w-6xl px-6 pb-12">
-      <h2 className="text-2xl font-bold">Recently Analyzed</h2>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {history.map((entry) => {
-          const date = new Date(entry.analyzedAt)
-          return (
-            <div
-              key={entry.analyzedAt}
-              role="button"
-              tabIndex={0}
-              onClick={() =>
-                navigate('/results', {
-                  state: { topic: entry.topic, cachedResults: entry.results },
-                })
-              }
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  navigate('/results', {
-                    state: { topic: entry.topic, cachedResults: entry.results },
-                  })
-                }
-              }}
-              className="rounded-2xl border border-[#E8EAF0] border-l-4 border-l-[#2563EB] bg-white p-6 text-left shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] transition hover:border-[#2563EB]"
-            >
-              <strong className="block text-[#0F1117]">{entry.topic}</strong>
-              <span className="mt-2 block text-xs text-[#6B7280]">
-                Analyzed on {date.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}{' '}
-                at {date.toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false,
-                })}
-              </span>
-              <span className="mt-3 block text-sm text-[#6B7280]">
-                {entry.stats.totalSources} sources · {entry.stats.totalArticles} articles
-              </span>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  removeAnalysis(entry.analyzedAt)
-                }}
-                className="mt-4 text-sm font-medium text-[#DC2626] transition hover:text-red-800"
-              >
-                Delete
-              </button>
-            </div>
-          )
-        })}
-      </div>
-    </section>
-  )
+  return <section id="recent-analyses" aria-labelledby="library-heading" className="library-section app-container">
+    <div className="section-title-row">
+      <div><p className="section-kicker">PICK UP WHERE YOU LEFT OFF</p><h2 id="library-heading" className="section-title">Your reading room<span>.</span></h2></div>
+      <span className="subtle-label">{history.length ? `${history.length} saved ${history.length === 1 ? 'analysis' : 'analyses'}` : 'Made for a second look'}</span>
+    </div>
+    {!history.length ? <div className="library-empty"><span className="library-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M4 5h6a3 3 0 0 1 3 3v13a4 4 0 0 0-4-3H4V5Zm9 3a3 3 0 0 1 3-3h5v13h-4a4 4 0 0 0-4 3" /></svg></span><div><h3>A little space for the bigger picture.</h3><p>Your analyses will appear here, ready whenever you want to revisit a story.</p></div></div> :
+      <div className="library-grid">{history.map((entry) => <article key={entry.analyzedAt} className="library-card">
+        <button type="button" className="library-open" onClick={() => navigate('/results', { state: { topic: entry.topic, cachedResults: entry.results } })}>
+          <span className="library-date">{new Date(entry.analyzedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })} <ArrowIcon /></span>
+          <strong>{entry.topic}</strong>
+          <span className="library-stats">{entry.stats?.totalSources ?? 0} sources <span>·</span> {entry.stats?.totalArticles ?? 0} articles</span>
+        </button>
+        <div className="library-card-footer"><span>Saved on this device</span><button type="button" onClick={() => removeAnalysis(entry.analyzedAt)} aria-label={`Delete ${entry.topic}`}>Delete</button></div>
+      </article>)}</div>}
+  </section>
 }

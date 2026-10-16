@@ -5,6 +5,7 @@ import HighlightPopup from '../components/HighlightPopup.jsx'
 import WorldMap from '../components/WorldMap.jsx'
 import CoverageDifferences from '../components/CoverageDifferences.jsx'
 import useHighlight from '../hooks/useHighlight'
+import AppHeader, { ArrowIcon } from '../components/AppHeader'
 
 const EMPTY_ARTICLES = []
 
@@ -42,6 +43,7 @@ export default function ResultsPage() {
     []
 
   useEffect(() => {
+    if (!topic && !state?.cachedResults) return undefined
     if (state?.cachedResults) {
       setResult(state.cachedResults)
       setLoading(false)
@@ -117,208 +119,80 @@ export default function ResultsPage() {
     return () => controller.abort()
   }, [topic])
 
+  if (!topic && !state?.cachedResults) {
+    return <div className="app-page"><AppHeader report /><main className="app-container state-page"><span className="section-kicker">START WITH A QUESTION</span><h1>What story is on your mind?</h1><p>Choose a story from the news desk, or search for a topic to compare its coverage.</p><button type="button" className="button-primary" onClick={() => navigate('/')}>Explore the news desk <ArrowIcon /></button></main></div>
+  }
+
   if (loading) {
-    return (
-      <main className="min-h-screen bg-[#F8F9FB] px-6 py-10 text-[#0F1117]">
-        <div className="mx-auto max-w-5xl">
-          <h1 className="mb-8 text-3xl font-bold text-[#0F1117]">Analyzing: {topic}</h1>
-          <AgentPipeline events={events} selectedSources={selectedSources} />
-          <WorldMap events={events} selectedSources={selectedSources} />
-        </div>
-      </main>
-    )
+    return <div className="app-page"><AppHeader report /><main className="app-container loading-page">
+      <p className="section-kicker">A WIDER VIEW IS TAKING SHAPE</p><h1 className="report-title">Bringing the story<br /><span>into focus.</span></h1>
+      <p className="loading-topic">{topic}</p>
+      <div className="loading-layout"><AgentPipeline events={events} selectedSources={selectedSources} /><WorldMap events={events} selectedSources={selectedSources} /></div>
+      <p className="loading-note">We’re gathering articles, comparing their framing, and checking how the accounts differ.</p>
+    </main></div>
   }
 
   if (error) {
-    return     <main className="min-h-screen bg-[#F8F9FB] p-6 text-[#DC2626]">{error}</main>
+    return <div className="app-page"><AppHeader report /><main className="app-container state-page" role="alert"><span className="section-kicker">LET’S TAKE ANOTHER LOOK</span><h1>The story couldn’t load.</h1><p>{error}</p><button type="button" className="button-primary" onClick={() => navigate('/')}>Back to the news desk <ArrowIcon direction="right" /></button></main></div>
   }
 
-  return (
-    <main className="min-h-screen bg-[#F8F9FB] px-6 py-10 text-[#0F1117]">
-      <div className="mx-auto max-w-6xl space-y-8">
-        {result?.heroImage && (
-          <div className="relative h-[320px] overflow-hidden rounded-2xl">
-            <img src={result.heroImage} alt="" className="h-full w-full object-cover" />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-8 pt-24">
-              <h1 className="font-['Playfair_Display'] text-4xl font-semibold text-white">
-                {topic}
-              </h1>
-            </div>
-          </div>
-        )}
-        <header>
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="mb-6 text-sm text-[#6B7280] transition hover:text-[#2563EB]"
-          >
-            ← Back to home
-          </button>
-          <p className="text-sm font-medium text-[#6B7280]">
-            RealNews analysis
-          </p>
-          <h1 className="mt-2 text-3xl font-bold">{topic}</h1>
-        </header>
+  const sources = result?.verdict?.sources || []
+  return <div className="app-page"><AppHeader report />
+    <main id="report-content" className="app-container report-page">
+      <button type="button" onClick={() => navigate('/')} className="report-back"><ArrowIcon direction="left" /> Back to home</button>
+      <header className="report-heading">
+        <div><div className="flex flex-wrap items-center gap-3"><p className="section-kicker">THE REALNEWS BRIEFING</p><span className="report-ready"><span /> Analysis complete</span></div><h1 className="report-title">{topic}</h1><p className="report-description">The shared facts. The different angles. A clearer view of the story.</p></div>
+        {result?.heroImage && <img src={result.heroImage} alt="" className="report-cover" onError={(event) => { event.currentTarget.style.display = 'none' }} />}
+      </header>
+      <div className="report-toolbar"><nav aria-label="Analysis sections"><a href="#overview" onClick={scrollToSection}>Overview</a><a href="#coverage" onClick={scrollToSection}>Coverage differences</a><a href="#sources" onClick={scrollToSection}>Source articles</a></nav><span className="subtle-label hidden lg:block">Made for a closer read</span></div>
+      <div className="report-metrics"><Stat value={result?.totalArticles ?? 0} label="Articles analyzed" /><Stat value={result?.totalSources ?? 0} label="Sources compared" /><Stat value={`${result?.durationSeconds ?? '0.0'}s`} label="Analysis time" /></div>
 
-        <WorldMap
-          events={events}
-          selectedSources={result?.sourceLocations || selectedSources}
-          final
-        />
-
-        <section>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Stat value={result?.totalArticles ?? 0} label="Articles Analyzed" />
-            <Stat value={result?.totalSources ?? 0} label="Sources Compared" />
-            <Stat value={result?.durationSeconds ?? '0.0'} label="Seconds" />
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-[#E8EAF0] border-l-4 border-l-[#2563EB] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]">
-          <h2 className="text-sm font-medium text-[#6B7280]">
-            Neutral Summary
-          </h2>
-          <p className="mt-4 text-xl leading-9 text-[#0F1117]">
-            {result?.verdict?.neutralSummary || result?.neutralSummary}
-          </p>
-        </section>
-
-        <CoverageDifferences coverage={result?.coverage} articles={result?.articles || []} />
-
-        <BiasSpectrum analysis={result?.verdict?.sources || []} />
-
-        <section>
-          <h2 className="mb-4 text-2xl font-bold">Source Cards</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {(result?.verdict?.sources || []).map((item) => (
-              <article
-                key={item.source}
-                data-source={item.source}
-                className="rounded-2xl border border-[#E8EAF0] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]"
-              >
-                {(() => {
-                  const article = result?.articles?.find(
-                    (candidate) => candidate.source === item.source,
-                  )
-                  return article?.contentFull ? (
-                    <div className="mb-5 border-b border-[#E8EAF0] pb-5">
-                      <p className="text-xs font-medium text-[#6B7280]">
-                        Article
-                      </p>
-                      <p
-                        data-highlight-source={item.source}
-                        data-article-id={result.articles.indexOf(article)}
-                        className="mt-2 leading-7 text-[#6B7280]"
-                      >
-                        {article.contentFull}
-                      </p>
-                    </div>
-                  ) : null
-                })()}
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="font-semibold text-[#0F1117]">{item.source}</h3>
-                  <span className={`rounded-full px-3 py-1 text-sm font-medium ${biasClass(item.biasScore)}`}>
-                    {item.biasScore}/100
-                  </span>
-                </div>
-                <div className="mt-5">
-                  <p className="text-xs font-medium text-[#6B7280]">
-                    Emotional language
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {(item.emotionalLanguage || []).map((word) => (
-                      <span
-                        key={word}
-                        className="rounded-lg bg-[#FEF2F2] px-2.5 py-1 text-sm text-[#DC2626]"
-                      >
-                        {word}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-5">
-                  <p className="text-xs font-medium text-[#6B7280]">
-                    Emphasis
-                  </p>
-                  <p className="mt-2 leading-7 text-[#6B7280]">{item.emphasis}</p>
-                </div>
-                <div className="mt-5 border-t border-[#E8EAF0] pt-5">
-                  <p className="text-xs font-medium text-[#6B7280]">Omissions</p>
-                  <p className="mt-2 leading-7 text-[#6B7280]">{item.omissions}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-[#E8EAF0] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]">
-          <h2 className="text-2xl font-bold">Common Facts</h2>
-          <ul className="mt-4 space-y-3 text-[#6B7280]">
-            {(result?.verdict?.commonFacts || result?.commonFacts || []).map(
-              (fact) => (
-                <li key={fact} className="flex gap-3 leading-7">
-                  <span className="text-[#2563EB]">✓</span>
-                  <span>{fact}</span>
-                </li>
-              ),
-            )}
-          </ul>
-        </section>
-
-        <section className="rounded-2xl border border-[#FDE68A] border-l-4 border-l-[#F59E0B] bg-[#FFFBEB] p-6">
-          <h2 className="text-2xl font-bold text-[#92400E]">
-            Missing Context
-          </h2>
-          <p className="mt-3 leading-7 text-[#92400E]">
-            {result?.verdict?.missingContext || result?.missingContext}
-          </p>
-        </section>
+      <div id="overview" className="report-overview">
+        <div className="report-overview-main">
+          <section className="surface summary-panel"><div className="flex items-center justify-between gap-3"><p className="section-kicker">START HERE</p><span className="summary-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 6h14M5 12h14M5 18h9" /></svg></span></div><h2 className="panel-title mt-3">Neutral Summary</h2><p className="neutral-summary">{result?.verdict?.neutralSummary || result?.neutralSummary || 'No summary was returned for this analysis.'}</p><div className="summary-footer"><span /> A starting point. Explore the sources for the full context.</div></section>
+          <section className="surface facts-panel"><p className="section-kicker">THE SHARED GROUND</p><h2 className="panel-title mt-2">Common Facts</h2><ul className="common-facts">{(result?.verdict?.commonFacts || result?.commonFacts || []).map((fact) => <li key={fact}><span aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m5 10 3 3 7-7" /></svg></span>{fact}</li>)}</ul>{!(result?.verdict?.commonFacts || result?.commonFacts || []).length && <p className="empty-copy">No shared facts were returned. Read the source articles below.</p>}</section>
+        </div>
+        <aside className="report-sidebar" aria-label="Source overview"><BiasSpectrum analysis={sources} /><WorldMap events={events} selectedSources={result?.sourceLocations || selectedSources} final /></aside>
       </div>
-      {highlight.popup && <HighlightPopup {...highlight} />}
-    </main>
-  )
+
+      <div id="coverage" className="report-section"><CoverageDifferences coverage={result?.coverage} articles={result?.articles || []} /></div>
+      <section id="sources" className="report-section"><div className="section-title-row"><div><p className="section-kicker">READ BETWEEN THE HEADLINES</p><h2 className="section-title">The sources, side by side<span>.</span></h2></div><span className="subtle-label">{sources.length} perspectives</span></div><p className="source-hint"><span aria-hidden="true">Aa</span> Select a sentence in an article excerpt to explore its wording and compare it with other sources.</p>
+        <div className="source-grid">{sources.map((item, index) => {
+          const articleId = result?.articles?.findIndex((candidate) => candidate.source === item.source) ?? -1
+          const article = result?.articles?.[articleId]
+          const text = article?.contentFull || article?.contentShort
+          return <article key={item.source} data-source={item.source} className="surface source-card">
+            <header className="source-card-heading"><span className="source-number">{String(index + 1).padStart(2, '0')}</span><h3>{item.source}</h3><span className={`score-pill ${biasClass(item.biasScore)}`} title="Higher scores indicate more loaded wording or framing">{item.biasScore}<span>/100</span></span></header>
+            {text && <div className="source-reading"><p className="source-reading-label">ARTICLE EXCERPT</p>{article.title && <h4>{article.title}</h4>}<p data-highlight-source={item.source} data-article-id={articleId} className="source-text">{text}</p>{safeHref(article.url) && <a href={article.url} target="_blank" rel="noopener noreferrer" className="source-original">Read original article <ArrowIcon /></a>}</div>}
+            <div className="source-findings"><div><p className="finding-label">Emotional language</p><div className="word-tags">{item.emotionalLanguage?.length ? item.emotionalLanguage.map((word) => <span key={word}>{word}</span>) : <span className="word-tag-empty">None identified</span>}</div></div><div><p className="finding-label">Emphasis</p><p>{item.emphasis || 'No emphasis identified.'}</p></div><div><p className="finding-label">Omissions</p><p>{item.omissions || 'No omissions identified in the available text.'}</p></div></div>
+          </article>
+        })}</div>{!sources.length && <div className="surface empty-copy">No source assessments were returned for this analysis.</div>}
+      </section>
+      <section className="context-panel"><span className="context-symbol" aria-hidden="true">i</span><div><p className="section-kicker">KEEP IN MIND</p><h2 className="panel-title mt-2">Missing Context</h2><p>{result?.verdict?.missingContext || result?.missingContext || 'Read the original articles to check the wider context of each account.'}</p></div></section>
+      <footer className="report-footer"><span>RealNews. There’s always another perspective.</span><a href="#report-content" onClick={scrollToSection}>Back to top <ArrowIcon /></a></footer>
+    </main>{highlight.popup && <HighlightPopup {...highlight} />}
+  </div>
+}
+
+function scrollToSection(event) {
+  event.preventDefault()
+  document.getElementById(event.currentTarget.hash.slice(1))?.scrollIntoView({ block: 'start' })
+}
+
+function safeHref(value) {
+  try { return ['https:', 'http:'].includes(new URL(value).protocol) } catch { return false }
 }
 
 function Stat({ value, label }) {
-  return (
-    <div className="rounded-2xl border border-[#E8EAF0] bg-white p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]">
-      <div className="text-3xl font-bold text-[#0F1117]">{value}</div>
-      <div className="mt-1 text-xs font-medium text-[#6B7280]">
-        {label}
-      </div>
-    </div>
-  )
+  return <div className="report-stat"><strong>{value}</strong><span>{label}</span></div>
 }
 
 function BiasSpectrum({ analysis }) {
-  return (
-    <section className="rounded-2xl border border-[#E8EAF0] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Bias Spectrum</h2>
-        <span className="text-sm text-[#6B7280]">Left to Right</span>
-      </div>
-      <div className="relative mt-12 px-1">
-        <div className="h-2 rounded-full bg-gradient-to-r from-[#DC2626] via-[#16A34A] to-[#EA580C]" />
-        {analysis.map((item) => (
-          <span
-            key={item.source}
-            title={`${item.source}: ${item.biasScore}`}
-            className="absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#2563EB] shadow-lg"
-            style={{ left: `${Math.min(100, Math.max(0, item.biasScore))}%` }}
-          />
-        ))}
-      </div>
-      <div className="mt-4 flex justify-between text-xs text-[#6B7280]">
-        <span>Left</span>
-        <span>Center</span>
-        <span>Right</span>
-      </div>
-    </section>
-  )
+  return <section className="surface framing-panel"><p className="section-kicker">A QUICK COMPARISON</p><h2 className="panel-title mt-2">Framing at a glance</h2><p className="framing-description">Loaded wording and emphasis across the available accounts.</p><div className="framing-track" aria-hidden="true" /><div className="framing-labels"><span>Less loaded</span><span>More loaded</span></div><ul className="framing-sources">{analysis.map((item) => <li key={item.source}><span>{item.source}</span><div aria-hidden="true"><i style={{ width: `${Math.min(100, Math.max(0, item.biasScore))}%` }} /></div><strong>{item.biasScore}<span>/100</span></strong></li>)}</ul>{!analysis.length && <p className="empty-copy">No source scores available.</p>}</section>
 }
 
 function biasClass(score) {
-  if (score < 40) return 'bg-[#FEF2F2] text-[#DC2626]'
-  if (score > 60) return 'bg-[#FFF7ED] text-[#EA580C]'
-  return 'bg-[#F0FDF4] text-[#16A34A]'
+  if (score < 40) return 'score-low'
+  if (score > 60) return 'score-high'
+  return 'score-mid'
 }

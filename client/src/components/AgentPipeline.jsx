@@ -1,64 +1,21 @@
-function Agent({ name, state, message }) {
-  const styles = {
-    waiting: 'border-dashed border-[#E8EAF0] bg-[#F3F4F6] text-[#6B7280]',
-    active: 'border-[#2563EB] bg-[#EFF6FF] text-[#2563EB] animate-pulse',
-    done: 'border-[#16A34A] bg-[#F0FDF4] text-[#16A34A]',
-  }
+const getState = (events, name) => [...events].reverse().find((item) => item.agent?.toLowerCase() === name.toLowerCase()) || { status: 'waiting' }
 
-  return (
-    <div className={`rounded-2xl border p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] ${styles[state]}`}>
-      <div className="flex items-center justify-between gap-3">
-        <span className="font-medium">{name}</span>
-        {state === 'done' && <span aria-label="Done">✓</span>}
-      </div>
-      <p className="mt-2 text-sm">
-        {state === 'waiting' && 'Waiting...'}
-        {state === 'active' && (message || 'Active...')}
-        {state === 'done' && 'Done'}
-      </p>
-    </div>
-  )
+function Agent({ events, name, label = name, number }) {
+  const { status, message, articlesFound } = getState(events, name)
+  return <div className={`agent-card agent-${status}`}>
+    <span className="agent-indicator" aria-hidden="true">{status === 'done' ? <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="m5 10 3 3 7-7" /></svg> : status === 'error' ? '!' : number || <span />}</span>
+    <div><h3>{label}</h3><p>{status === 'done' ? (articlesFound != null ? `${articlesFound} articles found` : 'Complete') : status === 'error' ? 'Source unavailable' : status === 'active' ? message || 'Gathering coverage…' : 'Waiting to begin'}</p></div>
+    {status === 'active' && <span className="agent-spinner" aria-label="In progress" />}
+  </div>
 }
 
-function getState(events, name) {
-  const event = [...events]
-    .reverse()
-    .find((item) => item.agent?.toLowerCase() === name.toLowerCase())
-  return event
-    ? { status: event.status, message: event.message }
-    : { status: 'waiting' }
-}
-
-export default function AgentPipeline({ events = [], selectedSources }) {
-  const pipeline = ['Orchestrator', 'Judge']
-  const eventSources =
-    events.find((event) => Array.isArray(event.selectedSources))?.selectedSources
-  const visibleSources = selectedSources || eventSources
-
-  return (
-    <div className="flex w-full flex-col gap-4 rounded-2xl border border-[#E8EAF0] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]">
-      <AgentState events={events} name={pipeline[0]} />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-        {visibleSources
-          ? visibleSources.map((source) => (
-              <AgentState key={source} events={events} name={source} />
-            ))
-          : Array.from({ length: 5 }, (_, index) => (
-              <div
-                key={index}
-                className="rounded-2xl border border-dashed border-[#E8EAF0] bg-[#F3F4F6] p-6 text-center text-sm text-[#6B7280]"
-              >
-                <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-[#9CA3AF]" />
-                Selecting sources...
-              </div>
-            ))}
-      </div>
-      <AgentState events={events} name={pipeline[1]} />
-    </div>
-  )
-}
-
-function AgentState({ events, name, label = name }) {
-  const state = getState(events, name)
-  return <Agent name={label} state={state.status} message={state.message} />
+export default function AgentPipeline({ events = [], selectedSources = [] }) {
+  const selected = events.find((event) => Array.isArray(event.selectedSources))?.selectedSources || selectedSources
+  const names = [...new Set(selected.map((item) => typeof item === 'string' ? item : item.source || item.name).filter(Boolean))]
+  return <section className="surface pipeline" aria-label="Analysis progress">
+    <div className="section-title-row"><div><p className="section-kicker">BEHIND THE BRIEFING</p><h2 className="panel-title">A few perspectives. One clear picture.</h2></div><span className="status-pill"><span /> In progress</span></div>
+    <Agent events={events} name="Orchestrator" label="Finding the right perspectives" number="01" />
+    <div className="pipeline-sources">{names.length ? names.map((name) => <Agent key={name} events={events} name={name} />) : [0, 1, 2, 3].map((index) => <div key={index} className="agent-placeholder"><span /> Selecting a source</div>)}</div>
+    <Agent events={events} name="Judge" label="Comparing the coverage" number="03" />
+  </section>
 }

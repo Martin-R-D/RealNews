@@ -28,19 +28,19 @@ function StoryVisual({ image, featured }) {
         <img src={image} alt="" loading={featured ? 'eager' : 'lazy'} onError={() => setFailedImage(image)} className="h-full w-full object-cover" />
       ) : (
         <svg viewBox="0 0 600 400" aria-hidden="true" className="h-full w-full object-cover">
-          <defs><radialGradient id={gradientId}><stop stopColor="#245c75" /><stop offset="1" stopColor="#10213c" /></radialGradient></defs>
+          <defs><radialGradient id={gradientId}><stop stopColor="#f8fbff" /><stop offset="1" stopColor="#edf4ff" /></radialGradient></defs>
           <rect width="600" height="400" fill={`url(#${gradientId})`} />
-          <g fill="none" stroke="#79d8dc" opacity="0.4" strokeWidth="1">
+          <g fill="none" stroke="#8babd7" opacity="0.4" strokeWidth="1">
             <circle cx="300" cy="200" r="145" /><ellipse cx="300" cy="200" rx="85" ry="145" /><ellipse cx="300" cy="200" rx="28" ry="145" />
             <ellipse cx="300" cy="200" rx="145" ry="50" /><ellipse cx="300" cy="200" rx="135" ry="100" />
             <path d="M155 200h290M300 55v290M100 310Q300 20 510 170M120 100Q290 380 510 260" />
           </g>
-          <g fill="#a4f4d5"><circle cx="220" cy="135" r="5" /><circle cx="377" cy="157" r="5" /><circle cx="337" cy="270" r="5" /><circle cx="185" cy="225" r="4" /></g>
-          <path d="M220 135Q270 100 377 157M220 135Q200 220 337 270M185 225Q300 150 377 157" fill="none" stroke="#a4f4d5" strokeWidth="2" opacity="0.6" />
+          <g fill="#2563eb"><circle cx="220" cy="135" r="5" /><circle cx="377" cy="157" r="5" /><circle cx="337" cy="270" r="5" /><circle cx="185" cy="225" r="4" /></g>
+          <path d="M220 135Q270 100 377 157M220 135Q200 220 337 270M185 225Q300 150 377 157" fill="none" stroke="#2563eb" strokeWidth="2" opacity="0.6" />
         </svg>
       )}
       <div className="story-image-shade" />
-      <span className="story-image-label"><span className="h-1.5 w-1.5 rounded-full bg-[#a4f4d5]" /> {featured ? 'THE BIG PICTURE' : 'FROM THE NEWS DESK'}</span>
+      <span className="story-image-label"><span className="h-1.5 w-1.5 rounded-full bg-[#2563eb]" /> {featured ? 'THE BIG PICTURE' : 'FROM THE NEWS DESK'}</span>
     </div>
   )
 }
