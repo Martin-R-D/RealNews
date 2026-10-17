@@ -1,13 +1,12 @@
 require('dotenv').config()
 
-const Groq = require('groq-sdk')
-const { parseJson } = require('./parseJson')
+const { generateJSON } = require('../ai/client')
 const { SOURCES } = require('../fetchers/rssFetcher')
 
 async function orchestrate(topic) {
-  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-  const completion = await groq.chat.completions.create({
-    model: 'openai/gpt-oss-20b',
+  return generateJSON({
+    maxTokens: 1200,
+    validate: validateOrchestration,
     messages: [
       {
         role: 'user',
@@ -21,25 +20,22 @@ async function orchestrate(topic) {
       },
     ],
   })
+}
 
-  const content = completion.choices[0]?.message?.content?.trim()
-  if (!content) {
-    throw new Error('Groq returned an empty response')
-  }
-
-  const result = parseJson(content)
+function validateOrchestration(result) {
   const available = new Set(SOURCES.map((source) => source.name))
   const selectedSources = result.selectedSources
   const searchQueries = result.searchQueries
   if (
     !Array.isArray(selectedSources) ||
     selectedSources.length !== 5 ||
+    new Set(selectedSources).size !== 5 ||
     selectedSources.some((source) => !available.has(source)) ||
     !Array.isArray(searchQueries) ||
     searchQueries.length !== 3 ||
-    searchQueries.some((query) => typeof query !== 'string')
+    searchQueries.some((query) => typeof query !== 'string' || !query.trim())
   ) {
-    throw new Error('Groq response did not contain 5 valid sources and 3 queries')
+    throw new Error('AI response did not contain 5 valid sources and 3 queries')
   }
 
   return { selectedSources, searchQueries }

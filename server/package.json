@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "test": "node --test ai/*.test.js agents/*.test.js services/*.test.js *.integration.test.js",
+    "ai:check": "node scripts/check-ai.js"
   },
   "keywords": [],
   "author": "",
